@@ -21,7 +21,7 @@ It allows users to test the **strength and security level of their passwords** a
 
 ---
 
-## 📸 Preview
+## 📸 Preview (https://maleedew.github.io/Password_strength_analyzer/)
 ![Preview Screenshot](Screenshot.png)  
 
 ---
