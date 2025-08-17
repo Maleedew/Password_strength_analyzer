@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password strength analyzer</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Sinhala font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Sinhala', 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Custom styles for the simulator's animated text */
+        .blinking-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.2rem;
+            background-color: #f59e0b;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            from, to { background-color: transparent }
+            50% { background-color: #f59e0b; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-3xl bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-8">
+        
+        <!-- Header Section -->
+        <div class="text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-white" style="color: aqua;">Password strength analyzer</h1>
+            <p class="text-gray-400 mt-2">ඔබගේ මුරපදයේ ආරක්ෂාව පරීක්ෂා කර, එය බිඳ දැමීමට ගතවන කාලය දැනගන්න.</p>
+        </div>
+
+        <!-- Password Input Section -->
+        <div class="space-y-4">
+            <label for="passwordInput" class="block text-lg font-medium text-gray-300">ඔබගේ මුරපදය මෙහි ඇතුළත් කරන්න:</label>
+            <div class="relative">
+                <input type="text" id="passwordInput" class="w-full bg-gray-700 border-2 border-gray-600 text-white text-lg rounded-lg focus:ring-amber-500 focus:border-amber-500 p-4 pr-12" placeholder="උදා: P@sswOrd123!">
+                <button id="toggleVisibility" class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 hover:text-white">
+                    <!-- Eye Icon SVG -->
+                    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <!-- Eye Off Icon SVG (hidden by default) -->
+                     <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a10.05 10.05 0 015.07-5.513M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 2l20 20" />
+                    </svg>
+                </button>
+            </div>
+            <div id="strength-bar" class="w-full bg-gray-700 rounded-full h-3 mt-2">
+                <div id="strength-indicator" class="h-3 rounded-full transition-all duration-500" style="width: 0%;"></div>
+            </div>
+        </div>
+        
+        <!-- Analysis Results Section -->
+        <div id="analysisResults" class="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+            <!-- Crack Time Estimation -->
+            <div class="bg-gray-700/50 rounded-lg p-6 flex flex-col items-center justify-center text-center">
+                <h3 class="text-lg font-semibold text-gray-300">මුරපදය බිඳ දැමීමට ගතවන ඇස්තමේන්තුගත කාලය</h3>
+                <p id="crackTime" class="text-2xl md:text-3xl font-bold text-amber-400 mt-2"></p>
+                <p class="text-xs text-gray-500 mt-2">(තත්පරයට අනුමාන කිරීම් බිලියන 10ක වේගයකින්)</p>
+            </div>
+            
+            <!-- Strength Checklist -->
+            <div class="bg-gray-700/50 rounded-lg p-6 space-y-3">
+                 <h3 class="text-lg font-semibold text-gray-300 mb-3">ශක්තිය සඳහා වන නිර්ණායක</h3>
+                 <ul class="space-y-2 text-sm">
+                    <li id="check-length" class="flex items-center"><span class="mr-3"></span>අවම අක්ෂර 8ක්</li>
+                    <li id="check-uppercase" class="flex items-center"><span class="mr-3"></span>ඉංග්‍රීසි ලොකු අකුරක් (A-Z)</li>
+                    <li id="check-lowercase" class="flex items-center"><span class="mr-3"></span>ඉංග්‍රීසි කුඩා අකුරක් (a-z)</li>
+                    <li id="check-number" class="flex items-center"><span class="mr-3"></span>අංකයක් (0-9)</li>
+                    <li id="check-symbol" class="flex items-center"><span class="mr-3"></span>විශේෂ සංකේතයක් (!@#)</li>
+                    <li id="check-common" class="flex items-center"><span class="mr-3"></span>සුලභ මුරපදයක් නොවීම</li>
+                 </ul>
+            </div>
+        </div>
+
+        <!-- Attack Simulator Section -->
+        <div id="simulator" class="bg-black rounded-lg p-6 font-mono text-sm md:text-base hidden">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center">
+                    <span class="h-3 w-3 bg-red-500 rounded-full mr-2"></span>
+                    <span class="h-3 w-3 bg-yellow-500 rounded-full mr-2"></span>
+                    <span class="h-3 w-3 bg-green-500 rounded-full"></span>
+                </div>
+                <p class="text-gray-400">Brute-Force Simulator</p>
+            </div>
+            <div class="text-green-400">
+                <p>&gt; Starting attack simulation...</p>
+                <p>&gt; Target password length: <span id="sim-length"></span></p>
+                <p>&gt; Character set: <span id="sim-charset"></span></p>
+                <p class="mt-2">&gt; Trying combinations:</p>
+                <div class="bg-gray-900 p-3 rounded mt-1 min-h-[5rem]">
+                    <p id="sim-attempts" class="whitespace-pre-wrap break-all"></p>
+                    <div id="sim-result" class="mt-2 text-amber-400 font-bold"></div>
+                </div>
+            </div>
+        </div>
+        <center><h1 style="color: aqua;">-maleesha dewshan-</h1></center>
+
+    </div>
+
+    <script>
+        // DOM මූලද්‍රව්‍ය ලබා ගැනීම
+        const passwordInput = document.getElementById('passwordInput');
+        const analysisResults = document.getElementById('analysisResults');
+        const crackTimeEl = document.getElementById('crackTime');
+        const simulator = document.getElementById('simulator');
+        const simAttemptsEl = document.getElementById('sim-attempts');
+        const simResultEl = document.getElementById('sim-result');
+        const simLengthEl = document.getElementById('sim-length');
+        const simCharsetEl = document.getElementById('sim-charset');
+        const strengthIndicator = document.getElementById('strength-indicator');
+        const toggleVisibilityBtn = document.getElementById('toggleVisibility');
+        const eyeIcon = document.getElementById('eyeIcon');
+        const eyeOffIcon = document.getElementById('eyeOffIcon');
+
+        // නිර්ණායක මූලද්‍රව්‍ය
+        const checks = {
+            length: document.getElementById('check-length'),
+            uppercase: document.getElementById('check-uppercase'),
+            lowercase: document.getElementById('check-lowercase'),
+            number: document.getElementById('check-number'),
+            symbol: document.getElementById('check-symbol'),
+            common: document.getElementById('check-common')
+        };
+        
+        // සුලභ මුරපද ලැයිස්තුව
+        const commonPasswords = new Set(["password", "123456", "123456789", "qwerty", "12345678", "111111", "123123", "12345", "iloveyou", "password123"]);
+
+        // මුරපදය පෙනෙන/නොපෙනෙන ලෙස සැකසීම
+        toggleVisibilityBtn.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            eyeIcon.classList.toggle('hidden', !isPassword);
+            eyeOffIcon.classList.toggle('hidden', isPassword);
+        });
+
+        // පරිශීලකයා ටයිප් කරන විට විශ්ලේෂණය කිරීම
+        passwordInput.addEventListener('input', () => {
+            const password = passwordInput.value;
+
+            if (password.length === 0) {
+                resetUI();
+                return;
+            }
+
+            analysisResults.classList.remove('hidden');
+            simulator.classList.remove('hidden');
+            
+            analyzePassword(password);
+            runSimulator(password);
+        });
+        
+        // UI එක මුල් තත්වයට පත් කිරීම
+        function resetUI() {
+            analysisResults.classList.add('hidden');
+            simulator.classList.add('hidden');
+            strengthIndicator.style.width = '0%';
+            strengthIndicator.className = 'h-3 rounded-full transition-all duration-500';
+            Object.values(checks).forEach(el => updateCheckUI(el, 'pending'));
+        }
+
+        // මුරපදය විශ්ලේෂණය කරන ප්‍රධාන ශ්‍රිතය
+        function analyzePassword(password) {
+            const length = password.length;
+            let score = 0;
+            let charPool = 0;
+
+            // නිර්ණායක පරීක්ෂා කිරීම
+            const hasLowercase = /[a-z]/.test(password);
+            const hasUppercase = /[A-Z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSymbol = /[^a-zA-Z0-9]/.test(password);
+            const isLongEnough = length >= 8;
+            const isNotCommon = !commonPasswords.has(password.toLowerCase());
+
+            // ලකුණු සහ character pool ගණනය කිරීම
+            if (isLongEnough) score++;
+            if (hasLowercase) { score++; charPool += 26; }
+            if (hasUppercase) { score++; charPool += 26; }
+            if (hasNumber) { score++; charPool += 10; }
+            if (hasSymbol) { score++; charPool += 32; } // සාමාන්‍ය සංකේත ~32
+            if (isNotCommon && isLongEnough) score++;
+            
+            // UI යාවත්කාලීන කිරීම
+            updateCheckUI(checks.length, isLongEnough);
+            updateCheckUI(checks.uppercase, hasUppercase);
+            updateCheckUI(checks.lowercase, hasLowercase);
+            updateCheckUI(checks.number, hasNumber);
+            updateCheckUI(checks.symbol, hasSymbol);
+            updateCheckUI(checks.common, isNotCommon);
+
+            // ශක්ති මට්ටම (Strength Bar) යාවත්කාලීන කිරීම
+            const strengthPercentage = (score / 6) * 100;
+            strengthIndicator.style.width = `${strengthPercentage}%`;
+            if (score <= 2) {
+                strengthIndicator.className = 'h-3 rounded-full transition-all duration-500 bg-red-500';
+            } else if (score <= 4) {
+                strengthIndicator.className = 'h-3 rounded-full transition-all duration-500 bg-yellow-500';
+            } else {
+                strengthIndicator.className = 'h-3 rounded-full transition-all duration-500 bg-green-500';
+            }
+
+            // Crack time ගණනය කිරීම
+            if (charPool > 0) {
+                const combinations = BigInt(charPool) ** BigInt(length);
+                const guessesPerSecond = BigInt(10 * 10**9); // තත්පරයට අනුමාන බිලියන 10
+                const secondsToCrack = combinations / guessesPerSecond;
+                crackTimeEl.textContent = formatTime(secondsToCrack);
+            } else {
+                crackTimeEl.textContent = 'ක්ෂණිකව';
+            }
+        }
+        
+        // නිර්ණායකයක UI එක යාවත්කාලීන කිරීම
+        function updateCheckUI(element, success) {
+            const iconSuccess = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`;
+            const iconFailure = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>`;
+            const iconPending = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>`;
+            
+            element.classList.remove('text-green-400', 'text-red-400', 'text-gray-400');
+            if (success === 'pending') {
+                element.querySelector('span').innerHTML = iconPending;
+                element.classList.add('text-gray-400');
+            } else if (success) {
+                element.querySelector('span').innerHTML = iconSuccess;
+                element.classList.add('text-green-400');
+            } else {
+                element.querySelector('span').innerHTML = iconFailure;
+                element.classList.add('text-red-400');
+            }
+        }
+
+        // කාලය මිනිස්සුන්ට කියවිය හැකි ආකාරයට සකස් කිරීම
+        function formatTime(seconds) {
+            if (seconds < 1) return "ක්ෂණිකව";
+            if (seconds < 60) return `${Math.round(seconds)} තත්පර`;
+            if (seconds < 3600) return `${Math.round(seconds / 60)} මිනිත්තු`;
+            if (seconds < 86400) return `${Math.round(seconds / 3600)} පැය`;
+            if (seconds < 31536000) return `${Math.round(seconds / 86400)} දින`;
+            if (seconds < 3153600000) return `${Math.round(seconds / 31536000)} වසර`;
+            if (seconds < 31536000000) return `${Math.round(seconds / 3153600000)} දශක`;
+            return "ශතවර්ෂ ගණනාවක්";
+        }
+
+        let simInterval; // සිමියුලේටරය නැවැත්වීමට
+        // ප්‍රහාර සිමියුලේටරය ක්‍රියාත්මක කිරීම
+        function runSimulator(password) {
+            clearInterval(simInterval); // පරණ සිමියුලේෂන් එක නතර කිරීම
+            simAttemptsEl.innerHTML = '';
+            simResultEl.textContent = '';
+            
+            const length = password.length;
+            simLengthEl.textContent = length;
+
+            let charset = '';
+            if (/[a-z]/.test(password)) charset += 'a-z, ';
+            if (/[A-Z]/.test(password)) charset += 'A-Z, ';
+            if (/[0-9]/.test(password)) charset += '0-9, ';
+            if (/[^a-zA-Z0-9]/.test(password)) charset += 'සංකේත, ';
+            simCharsetEl.textContent = charset.slice(0, -2) || 'නැත';
+
+            let attempts = 0;
+            let currentGuess = '';
+            const maxAttempts = 200; // සිමියුලේෂන් එකේ උපරිම උත්සාහයන් ගණන
+            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+
+            simAttemptsEl.innerHTML = '<span class="blinking-cursor"></span>';
+
+            simInterval = setInterval(() => {
+                if (attempts >= maxAttempts || currentGuess === password) {
+                    clearInterval(simInterval);
+                    if (currentGuess === password) {
+                        simResultEl.textContent = `> මුරපදය සොයාගත්තා: "${password}"`;
+                    } else {
+                        simResultEl.textContent = '> මෙම මුරපදය සිමියුලේට් කිරීමට ඉතා සංකීර්ණයි...';
+                    }
+                    return;
+                }
+                
+                // අහඹු ලෙස අනුමානයක් ජනනය කිරීම
+                currentGuess = '';
+                for (let i = 0; i < length; i++) {
+                    currentGuess += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                
+                simAttemptsEl.textContent = currentGuess;
+                attempts++;
+            }, 50); // මිලි තත්පර 50කට වරක්
+        }
+        
+        // පිටුව පූරණය වූ විට UI එක reset කිරීම
+        resetUI();
+
+    </script>
+</body>
+</html>
