@@ -22,8 +22,7 @@ It allows users to test the **strength and security level of their passwords** a
 ---
 
 ## 📸 Preview
-![Preview Screenshot](Screenshot (17).png)  
-*(Add your own screenshot named `screenshot.png` in the repo to show a preview.)*
+![Preview Screenshot](Screenshot.png)  
 
 ---
 
